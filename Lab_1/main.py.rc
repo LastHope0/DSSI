@@ -1,0 +1,128 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+import os
+from pathlib import Path
+
+import PyQt5
+from PyQt5.QtWidgets import QWidget # others imports
+import cv2
+
+os.environ["QT_QPA_PLATFORM_PLUGIN_PATH"] = os.fspath(
+    Path(PyQt5.__file__).resolve().parent / "Qt5" / "plugins"
+)
+
+#* 1
+# Function to load an image
+def load_image(file_path):
+    try:
+        # Load the image from the specified file path
+        image = cv2.imread(file_path)
+
+        # Check if the image was loaded successfully
+        if image is not None:
+            return image
+        else:
+            print("Failed to load the image.")
+            return None
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+        return None
+
+# Function to display an image
+def display_image(image, window_name="Image"):
+    try:
+        # Display the image in a window
+        cv2.imshow(window_name, image)
+        cv2.waitKey(0)  # Wait for a key press
+        cv2.destroyAllWindows()  # Close all windows
+    except Exception as e:
+        print(f"An error occurred while displaying the image: {str(e)}")
+
+
+# Function to save an image
+def save_image(image, file_path):
+    try:
+        # Save the image to the specified file path
+        cv2.imwrite(file_path, image)
+        print(f"Image saved as {file_path}")
+    except Exception as e:
+        print(f"An error occurred while saving the image: {str(e)}")
+
+#* 2.
+# Function to convert a color image to grayscale using the specified formula
+def color_to_grayscale(image):
+    try:
+        # Check if the input image is color (3 channels) or grayscale (1 channel)
+        if len(image.shape) == 3:
+            # Calculate the grayscale image using the specified formula
+            gray_image = 0.3 * image[:, :, 2] + 0.59 * image[:, :, 1] + 0.11 * image[:, :, 0]
+            # Convert the result to an 8-bit unsigned integer (0-255)
+            gray_image = gray_image.astype(np.uint8)
+        else:
+            # If the image is already grayscale, return it as is
+            gray_image = image
+
+        return gray_image
+    except Exception as e:
+        print(f"An error occurred during color to grayscale conversion: {str(e)}")
+        return None
+    
+# Функция для вывода гистограммы яркости
+def plot_histogram(image, title="Histogram"):
+    gray_image = color_to_grayscale(image)
+    hist = cv2.calcHist([gray_image], [0], None, [256], [0, 256])
+    plt.figure()
+    plt.title(title)
+    plt.xlabel('Яркость')
+    plt.ylabel('Частота')
+    plt.plot(hist)
+    plt.xlim([0, 256])
+    plt.show()
+
+# # Функция для логарифмической коррекции
+# def apply_log_correction(image, c):
+#     result_image = np.zeros_like(image)
+#     for i in range(3):
+#         result_image[:, :, i] = c * np.log(1 + image[:, :, i])
+#     return np.clip(result_image, 0, 255).astype(np.uint8)
+
+# # Функция для выполнения оператора Робертса
+# def roberts_operator(image):
+#     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+#     kernel_x = np.array([[1, 0], [0, -1]])
+#     kernel_y = np.array([[0, 1], [-1, 0]])
+#     gradient_x = cv2.filter2D(gray_image, -1, kernel_x)
+#     gradient_y = cv2.filter2D(gray_image, -1, kernel_y)
+#     gradient_magnitude = np.sqrt(gradient_x ** 2 + gradient_y ** 2)
+#     return gradient_magnitude
+
+if __name__ == "__main__":
+    file_path = "tree.jpg"  # Замените на путь к вашему изображению
+
+    # 1. Загрузка и отображение изображения
+    original_image = load_image(file_path)
+
+    display_image(original_image)
+
+    # 2. Вывод гистограммы яркости исходного изображения
+    plot_histogram(original_image, 'Гистограмма яркости (Исходное изображение)')
+
+    # # 3. Логарифмическая коррекция
+    # c = 1.0  # Замените на желаемое значение c
+    # log_corrected_image = apply_log_correction(original_image, c)
+    # cv2.imshow('Логарифмическая коррекция', log_corrected_image)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+
+    # # Вывод гистограммы яркости обработанного изображения
+    # plot_histogram(log_corrected_image, 'Гистограмма яркости (Логарифмическая коррекция)')
+
+    # # 4. Выполнение оператора Робертса
+    # roberts_image = roberts_operator(original_image)
+    # cv2.imshow('Оператор Робертса', roberts_image)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
+
+    # # Вывод гистограммы яркости обработанного изображения
+    # plot_histogram(roberts_image, 'Гистограмма яркости (Оператор Робертса)')
