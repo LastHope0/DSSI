@@ -1,80 +1,35 @@
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
-from matplotlib.widgets import TextBox, Button
+from matplotlib.widgets import TextBox
 from scipy import ndimage
 import numpy as np
 
-# Define global variables to store file path and c value
+#file_path = "../test/P0001464.jpg"  # Replace with the path to your image
 file_path = "test.jpg"
-c_value = 1.0
 
-# Callback function for file path input
-def on_file_path_change(text):
-    global file_path
-    file_path = text  # Update the global file path
 
-# Callback function for c value input
-def on_c_value_change(text):
-    global c_value
+# Define a callback function to handle user input
+def on_text_change(text):
     try:
-        c_value = float(text)  # Update the global c value
+        # Convert the input text to a float
+        c_value = float(text)
+        
+        # Now you can use 'c_value' in your image processing functions
+        # For example, you can pass it to your 'apply_logarithmic_correction' function
+        corrected_image = apply_logarithmic_correction(grayscale_image, c_value)
+        
+        # Update the displayed image with the new 'c_value'
+        axs[0, 2].imshow(corrected_image, cmap='gray')
+        axs[0, 2].set_title(f'Corrected Image (c={c_value})')
+        axs[0, 2].axis('off')
+        
+        # Display the brightness histogram of the corrected image
+        display_brightness_histogram(axs[1, 2], corrected_image, f'Corrected Histogram (c={c_value})')
+        
+        # Refresh the plot
+        plt.draw()
     except ValueError:
         pass  # Ignore non-numeric input
-
-# Callback function for the generate plot button
-def generate_plot(event):
-    # Reload the image using the updated file path
-    loaded_image = load_image(file_path)
-
-    if loaded_image is not None:
-        # Create a grid for displaying images and histograms
-        fig, axs = plt.subplots(2, 4, figsize=(16, 8))
-
-        # Display the original image
-        axs[0, 0].imshow(loaded_image)
-        axs[0, 0].set_title('Original Image')
-        axs[0, 0].axis('off')
-
-        # Convert the color image to grayscale
-        grayscale_image = color_to_grayscale(loaded_image)
-
-        if grayscale_image is not None:
-            # Display the grayscale image
-            axs[0, 1].imshow(grayscale_image, cmap="gray")
-            axs[0, 1].set_title('Grayscale Image')
-            axs[0, 1].axis('off')
-
-            # Display the brightness histogram of the grayscale image
-            display_brightness_histogram(axs[1, 1], grayscale_image, 'Grayscale Histogram')
-
-            # Apply logarithmic correction to the grayscale image
-            corrected_image = apply_logarithmic_correction(grayscale_image, c_value)
-
-            if corrected_image is not None:
-                # Display the corrected image
-                axs[0, 2].imshow(corrected_image, cmap='gray')
-                axs[0, 2].set_title(f'Corrected Image (c={c_value})')
-                axs[0, 2].axis('off')
-
-                # Display the brightness histogram of the corrected image
-                display_brightness_histogram(axs[1, 2], corrected_image, f'Corrected Histogram (c={c_value})')
-
-                # Apply the Roberts operator filter to the grayscale image
-                roberts_image = apply_roberts_operator(grayscale_image)
-                if roberts_image is not None:
-                    # Display the Roberts operator filtered image
-                    axs[0, 3].imshow(roberts_image, cmap='gray')
-                    axs[0, 3].set_title('Roberts Image')
-                    axs[0, 3].axis('off')
-
-                    # Display the brightness histogram of the Roberts operator filtered image
-                    display_brightness_histogram(axs[1, 3], roberts_image, 'Roberts Histogram')
-
-                    # Adjust spacing between subplots
-                    plt.tight_layout()
-
-                    # Show the combined plot
-                    plt.show()
 
 # Function to load an image
 def load_image(file_path):
@@ -85,7 +40,6 @@ def load_image(file_path):
         print(f"An error occurred while loading the image: {str(e)}")
         return None
 
-# Convolve
 def convolve_2d(image, kernel):
     # Get dimensions of the input image and kernel
     image_height, image_width = image.shape
@@ -205,23 +159,62 @@ def apply_roberts_operator(gray_image):
 
 
 if __name__ == "__main__":
-    
-    # Create a separate figure for input elements
-    input_fig = plt.figure(figsize=(10,3))
+    # Load the image
+    loaded_image = load_image(file_path)
 
-    # Create text input boxes for file path and c value
-    file_path_text_box_ax = plt.axes([0.3, 0.6, 0.4, 0.1])
-    file_path_text_box = TextBox(file_path_text_box_ax, 'Path:', initial=file_path)
-    file_path_text_box.on_submit(on_file_path_change)
+    if loaded_image is not None:
+        
+        # Create a grid for displaying images and histograms
+        fig, axs = plt.subplots(2, 4, figsize=(16, 8))
 
-    c_value_text_box_ax = plt.axes([0.3, 0.4, 0.4, 0.1])
-    c_value_text_box = TextBox(c_value_text_box_ax, 'c:', initial=str(c_value))
-    c_value_text_box.on_submit(on_c_value_change)
+        # Display the original image
+        axs[0, 0].imshow(loaded_image)
+        axs[0, 0].set_title('Original Image')
+        axs[0, 0].axis('off')
+        
+        # Convert the color image to grayscale
+        grayscale_image = color_to_grayscale(loaded_image)
 
-    # Create a button to generate the plot
-    generate_plot_button_ax = plt.axes([0.3, 0.2, 0.4, 0.1])
-    generate_plot_button = Button(generate_plot_button_ax, 'Generate')
-    generate_plot_button.on_clicked(generate_plot)
+        if grayscale_image is not None:
+            
+            # Display the grayscale image
+            axs[0, 1].imshow(grayscale_image, cmap = "gray")
+            axs[0, 1].set_title('Grayscale Image')
+            axs[0, 1].axis('off')
+            
+            # Display the brightness histogram of the grayscale image
+            display_brightness_histogram(axs[1, 1], grayscale_image, 'Grayscale Histogram')
 
-    # Show the input elements figure
-    plt.show()
+            # Apply logarithmic correction to the grayscale image
+            corrected_image = apply_logarithmic_correction(grayscale_image, 1)
+
+            if corrected_image is not None:
+                
+                # Display the corrected image
+                axs[0, 2].imshow(corrected_image, cmap='gray')
+                axs[0, 2].set_title('Corrected Image')
+                axs[0, 2].axis('off')
+                
+                # Display the brightness histogram of the corrected image
+                display_brightness_histogram(axs[1, 2], corrected_image, 'Corrected Histogram')
+                
+                # Apply the Roberts operator filter to the grayscale image
+                roberts_image = apply_roberts_operator(grayscale_image)
+                print(roberts_image.shape)
+                print(grayscale_image.shape)
+                if roberts_image is not None:
+                    
+                    # Display the Roberts operator filtered image
+                    axs[0, 3].imshow(roberts_image, cmap='gray')
+                    axs[0, 3].set_title('Roberts Image')
+                    axs[0, 3].axis('off')
+                    
+                    # Display the brightness histogram of the Roberts operator filtered image
+                    display_brightness_histogram(axs[1, 3], roberts_image, 'Roberts Histogram')
+                    
+# Adjust spacing between subplots
+                    plt.tight_layout()
+
+                    # Show the combined plot
+                    plt.show()
+
