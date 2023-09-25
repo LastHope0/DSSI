@@ -5,8 +5,8 @@ from scipy import ndimage
 import numpy as np
 
 # Define global variables to store file path and c value
-file_path = "test.jpg"
-c_value = 1.0
+file_path = "test/5.jpg"
+c_value = 50.0
 
 # Callback function for file path input
 def on_file_path_change(text):
@@ -131,7 +131,8 @@ def color_to_grayscale(image):
             return image
         if len(image.shape) == 3:
             # Apply the formula to calculate grayscale values
-            grayscale_image = np.dot(image[..., :3], [0.3, 0.59, 0.11])           
+            grayscale_image = np.dot(image[..., :3], [0.3, 0.59, 0.11])         
+            print(grayscale_image)
             return grayscale_image
         else:
             print("Input image is not a color image (RGB).")
@@ -145,11 +146,17 @@ def display_brightness_histogram(ax, gray_image, title):
     try:
         # Ensure the image is in grayscale
         if len(gray_image.shape) == 2:
-            # Calculate the histogram
-            histogram, bins = np.histogram(gray_image.flatten(), bins=256, range=(0, 256))
-
+            
+            # Initialize an array to store the histogram
+            histogram = list(range(256)) # 256 bins for pixel intensities ranging from 0 to 255
+            
+            # Calculate the histogram manually
+            for pixel_value in gray_image.flatten().astype(np.uint8):
+                histogram[pixel_value] += 1
+            
             # Plot the histogram
-            ax.bar(bins[:-1], histogram, width=1, color='gray')
+            bins = list(range(256))
+            ax.bar(bins, histogram, width=1, color='gray')
             ax.set_xlim([0, 256])
             ax.set_title(title)
             ax.grid(axis='y', linestyle='--', alpha=0.7)
@@ -163,10 +170,13 @@ def apply_logarithmic_correction(gray_image, c):
         if len(gray_image.shape) == 2:
 
             # Apply the logarithmic correction
-            corrected_image = c * np.log(1 + gray_image + 1e-10)
-            
+            corrected_image = c * np.log(1 + gray_image)
+
             # Normalize the pixel values to the 0-255 range
-            corrected_image = ((corrected_image - corrected_image.min()) / (corrected_image.max() - corrected_image.min()) * 255).astype(np.uint8)
+            min = corrected_image.min()
+            max = corrected_image.max()
+            if(max > 255):
+                corrected_image = ((corrected_image - min) / (max - min) * 255).astype(np.uint8)
 
             return corrected_image
         else:
